@@ -48,6 +48,7 @@ def main(args):
               "layer_names":    [model.layers[i].name for i in layer_ids],
               "batch_size":     args.batch_size_extract,
               "concept_names":  c_names,
+              "n_concepts":     len(c_names),
               "method":         args.itc_model}
 
     # Split into labelled and unlabelled
@@ -60,9 +61,9 @@ def main(args):
 
     # Select concept extractor to use
     if args.itc_method == 'cme':
-        conc_extractor = ItCModel(model, c_train_l, **params)
+        conc_extractor = ItCModel(model, **params)
     else:
-        conc_extractor = Net2Vec(model, c_train_l, **params)
+        conc_extractor = Net2Vec(model, **params)
 
     # Train concept extractor
     conc_extractor.train(x_train_l, c_train_l, x_train_u, y_train_l)

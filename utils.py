@@ -30,4 +30,53 @@ def labelled_unlabbeled_split(x_data, c_data, y_data, n_labelled=100, n_unlabell
     return x_data_l, c_data_l, y_data_l, x_data_u, c_data_u, y_data_u
 
 
+def flatten_activations(x_data):
+    '''
+    Flatten all axes except the first one
+    '''
 
+    if len(x_data.shape) > 2:
+        n_samples = x_data.shape[0]
+        shape = x_data.shape[1:]
+        flattened = np.reshape(x_data, (n_samples, np.prod(shape)))
+    else:
+        flattened = x_data
+
+    return flattened
+
+
+def aggregate_activations(activations):
+    if len(activations.shape) == 4:
+        score_val = np.mean(activations, axis=(1, 2))
+    elif len(activations.shape) == 3:
+        score_val = np.mean(activations, axis=(1))
+    elif len(activations.shape) == 2:
+        score_val = activations
+    else:
+        raise ValueError("Unexpected data dimensionality")
+
+    return score_val
+
+
+def compute_activation_per_layer(x_data, layer_ids, model, batch_size=128,
+                                 aggregation_function=flatten_activations):
+    '''
+    Compute activations of x_data for 'layer_ids' layers
+    For every layer, aggregate values using 'aggregation_function'
+
+    Returns a list of size |layer_ids|, in which element L[i] is the activations
+    computed from the model layer model.layers[layer_ids[i]]
+    '''
+
+    hidden_features_list = []
+
+    for layer_id in layer_ids:
+        # Compute and aggregate hidden activtions
+        output_layer = model.layers[layer_id]
+        reduced_model = tf.keras.Model(inputs=model.inputs, outputs=[output_layer.output])
+        hidden_features = reduced_model.predict(x_data, batch_size=batch_size)
+        flattened = aggregation_function(hidden_features)
+
+        hidden_features_list.append(flattened)
+
+    return hidden_features_list
