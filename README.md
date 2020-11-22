@@ -5,7 +5,7 @@ CME is a (C)oncept-based (M)odel(E)xtraction framework, which can be used for an
 DNN models via explainable concept-based extracted models, in order to explain and improve 
 performance of DNN models, as well as to extract useful knowledge from them.
  
-For further details, see our paper (link coming soon).
+For further details, see [our paper](https://arxiv.org/abs/2010.13233).
 
 The experiments use the following open-source datasets:
 
@@ -43,6 +43,11 @@ Citing
 If you find this code useful in your research, please consider citing:
 
 ```
-TBC...
+@article{kazhdan2020now,
+  title={Now You See Me (CME): Concept-based Model Extraction},
+  author={Kazhdan, Dmitry and Dimanov, Botty and Jamnik, Mateja and Li{\`o}, Pietro and Weller, Adrian},
+  journal={arXiv preprint arXiv:2010.13233},
+  year={2020}
+}
 ```
 
