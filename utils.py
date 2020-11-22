@@ -1,7 +1,11 @@
 import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.manifold import TSNE
+import tensorflow as tf
 
 
-def labelled_unlabbeled_split(x_data, c_data, y_data, n_labelled=100, n_unlabelled=200):
+
+def labelled_unlabelled_split(x_data, c_data, y_data, n_labelled=100, n_unlabelled=200):
     '''
     Split data into those with labels, and those without labels
     :param x_data: Input data, numpy array of shape (n_samples, ...)
@@ -80,3 +84,78 @@ def compute_activation_per_layer(x_data, layer_ids, model, batch_size=128,
         hidden_features_list.append(flattened)
 
     return hidden_features_list
+
+
+
+def plot_summary(concept_model):
+
+    # For decision trees, also save their plots
+    if concept_model.clf_type == "DT":
+
+        from sklearn.tree import plot_tree
+        import matplotlib.pyplot as plt
+
+        dt = concept_model.clf
+        fig, ax = plt.subplots(figsize=(10, 10))  # whatever size you want
+
+        plot_tree(dt,
+                  ax=ax,
+                  feature_names=concept_model.concept_names,
+                  filled=True,
+                  rounded=True,
+                  proportion=True,
+                  precision=2,
+                  class_names=concept_model.class_names,
+                  impurity=False)
+
+        plt.show()
+
+    elif concept_model.clf_type == 'LR':
+        coeffs = concept_model.clf.coef_
+        print("LR Coefficients: ", coeffs)
+
+
+
+
+def compute_tsne_embedding(x_data, model, layer_ids, layer_names, batch_size=256):
+    '''
+    Compute tSNE latent space embeddings for specified layers of the DNN model
+    '''
+
+    h_l_list_agg = compute_activation_per_layer(x_data, layer_ids, model,
+                                                batch_size,
+                                                aggregation_function=aggregate_activations)
+    h_l_embedding_list = []
+
+    for i, h_l in enumerate(h_l_list_agg):
+        h_embedded = TSNE(n_components=2, n_jobs=4).fit_transform(h_l)
+        h_l_embedding_list.append(h_embedded)
+        print(layer_names[i])
+    return h_l_embedding_list
+
+
+def visualise_hidden_space(x_data, c_data, c_names, layer_names, layer_ids, model, batch_size=256):
+
+    # Compute tSNE embeddings
+    h_l_embedding_list = compute_tsne_embedding(x_data, model, layer_ids, layer_names, batch_size)
+
+    # Create figure of size |n_concepts| * |n_layers|
+    n_concepts = len(c_names)
+    n_rows = n_concepts
+    n_cols = len(h_l_embedding_list)
+    fig, axes = plt.subplots(nrows=n_rows, ncols=n_cols, figsize=(3 * n_cols, 4 * n_rows))
+
+    # Plot the embeddings of every layer, highlighting concept values
+    for i, h_2 in enumerate(h_l_embedding_list):
+        for j in range(1, n_concepts):
+            ax = axes[j-1, i]
+            ax.scatter(h_2[:, 0], h_2[:, 1], c=c_data[:, j])
+            ax.set_title(layer_names[i], fontsize=20)
+            ax.set_xticks([])
+            ax.set_yticks([])
+
+            if i == 0:
+                ax.set_ylabel(c_names[j], fontsize=20)
+
+    return fig
+

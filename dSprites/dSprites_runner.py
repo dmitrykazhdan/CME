@@ -2,10 +2,11 @@ import os
 from sklearn.metrics import accuracy_score
 import argparse
 
-from utils import labelled_unlabbeled_split
+from utils import labelled_unlabelled_split, visualise_hidden_space, plot_summary
 from dSprites.dSprites_loader import get_model_data
 from CtLModel import CtLModel
 from ItCModel import ItCModel
+from Net2Vec import Net2Vec
 
 
 def main(args):
@@ -49,24 +50,25 @@ def main(args):
               "batch_size":     args.batch_size_extract,
               "concept_names":  c_names,
               "n_concepts":     len(c_names),
-              "method":         args.itc_model}
+              "method":         args.itc_model
+              }
 
     # Split into labelled and unlabelled
     n_labelled      = args.n_labelled
     n_unlabelled    = args.n_unlabelled
     x_train_l, c_train_l, y_train_l, \
-    x_train_u, c_train_u, y_train_u = labelled_unlabbeled_split(x_train, c_train, y_train,
+    x_train_u, c_train_u, y_train_u = labelled_unlabelled_split(x_train, c_train, y_train,
                                                                 n_labelled=n_labelled, n_unlabelled=n_unlabelled)
     print("Generating concept extractor...")
 
-    # Select concept extractor to use
+    # Select concept extractor to use and train it
     if args.itc_method == 'cme':
         conc_extractor = ItCModel(model, **params)
     else:
+        params["layer_id"] = -4
         conc_extractor = Net2Vec(model, **params)
 
-    # Train concept extractor
-    conc_extractor.train(x_train_l, c_train_l, x_train_u, y_train_l)
+    conc_extractor.train(x_train_l, c_train_l, x_train_u)
     print("Concept extractor generated successfully...")
 
     # Predict test and train set concepts
@@ -115,8 +117,9 @@ def main(args):
     if args.tsne_vis:
         # Get t-SNE projections
         print("visualising t-SNE projections")
-        tsne_fig = conc_extractor.visualise_hidden_space(x_train[:args.n_tsne_samples],
-                                                         c_train[:args.n_tsne_samples])
+        tsne_fig = visualise_hidden_space(x_train[:args.n_tsne_samples], c_train[:args.n_tsne_samples],
+                                          conc_extractor.concept_names, conc_extractor.layer_names, conc_extractor.layer_ids,
+                                          model)
         tsne_fig.show()
         # Save tSNE plot figure
         if figs_path is not None:
@@ -141,11 +144,10 @@ def main(args):
     exp_results['ctl_extr_accuracy'] = acc_score_extr
 
     # Plot the Label Predictor model trained on extracted concepts
-    ctl_fig = conc_model_extr.plot_summary()
+    ctl_fig = plot_summary(conc_model_extr)
     # Save figure
     if figs_path is not None:
         ctl_fig.save_fig(os.path.join(figs_path, 'ctl-'+figure_suffix+'.png'), dpi=150)
-
 
     return exp_results
 

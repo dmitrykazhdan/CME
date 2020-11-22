@@ -3,7 +3,7 @@ from sklearn.tree import DecisionTreeClassifier
 import numpy as np
 
 '''
-CtL : Contept-to-Label
+CtL : Concept-to-Label
 
 Class for the transparent model representing a function from concepts to task labels.
 Represents the decision-making process of a given black-box model, in the concept representation
@@ -59,35 +59,6 @@ class CtLModel:
         clf.fit(c_data, y_data)
 
         return clf
-
-
-    def plot_summary(self):
-
-        # For decision trees, also save their plots
-        if self.clf_type == "DT":
-
-            from sklearn.tree import plot_tree
-            import matplotlib.pyplot as plt
-
-            dt = self.clf
-            fig, ax = plt.subplots(figsize=(10, 10))  # whatever size you want
-
-            plot_tree(dt,
-                      ax=ax,
-                      feature_names=self.concept_names,
-                      filled=True,
-                      rounded=True,
-                      proportion=True,
-                      precision=2,
-                      class_names=self.class_names,
-                      impurity=False)
-
-            plt.show()
-
-        elif self.clf_type == 'LR':
-            coeffs = self.clf.coef_
-            print("LR Coefficients: ", coeffs)
-
 
 
     def predict(self, c_data):
